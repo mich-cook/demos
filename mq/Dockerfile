@@ -5,6 +5,7 @@
 
 FROM rabbitmq:alpine
 
-RUN apk update && apk add nodejs
+RUN apk update && apk add nodejs npm
+RUN npm install amqplib
 
 COPY messenger.js /
