@@ -19,12 +19,14 @@ require('amqplib/callback_api')
 			if (error !== null) { shutdown(2, `Failed to open channel for producers.`); }
 			console.log(`Producer channel established.`);
 			producerChannel = channel;
+			startup();
 		});
 
 		connection.createChannel(function(error, channel) {
 			if (error !== null) { shutdown(2, `Failed to open channel for consumers.`); }
 			console.log(`Consumer channel established.`);
 			consumerChannel = channel;
+			startup();
 		});
 
 	});
@@ -33,7 +35,16 @@ function Producer() { };
 
 function Consumer() { };
 
-function startup() { };
+function startup() {
+	// wait for the second knock
+	// each channel will call startup when it's created
+	// since we can't know how long each will take
+	// first will fail this test. second will succeed.
+	if ((consumerChannel === undefined) || (producerChannel === undefined)) {
+		return;
+	}
+
+};
 
 function shutdown(code = 0, message) {
 
