@@ -33,7 +33,15 @@ require('amqplib/callback_api')
 
 function Producer() { };
 
-function Consumer() { };
+function Consumer() {
+	this.start = function() {
+		consumerChannel.assertQueue(queueName, { durable: false });
+		consumerChannel.consume(queueName, function(message) {
+			var message = JSON.parse(message);
+			console.log(`\tReceived message '${message.message}' from producer ${message.slot} with timestamp ${message.ts}.`);
+		});
+	};
+};
 
 function startup() {
 	// wait for the second knock
@@ -44,6 +52,16 @@ function startup() {
 		return;
 	}
 
+	// right now we just create one consumer.
+	// since we're not doing much with the messages the
+	// single consumer can actually handle a bunch of
+	// producer instances
+	(function() {
+		var consumer = new Consumer();
+		consumer.start();
+		consumers.push(consumer);
+		console.log(`Created a consumer.`);
+	}());
 };
 
 function shutdown(code = 0, message) {
