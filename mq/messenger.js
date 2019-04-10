@@ -31,15 +31,29 @@ require('amqplib/callback_api')
 
 	});
 
-function Producer() { };
+function Producer() {
+	this.message = `Hello Demo!`;
+	this.intervalHandle;
+	this.start = function() {
+		producerChannel.assertQueue(queueName, { durable: false });
+		this.intervalHandle = setInterval(function() {
+			var timestamp = new Date().getTime();
+			var payload = { "message": this.message, "timestamp": timestamp, "slot": this.slot };
+			producerChannel.sendToQueue(queueName, Buffer.from(JSON.stringify(payload)));
+		}.bind(this), 500);
+	};
+	this.stop = function() {
+		clearInterval(this.intervalHandle);
+	};
+};
 
 function Consumer() {
 	this.start = function() {
 		consumerChannel.assertQueue(queueName, { durable: false });
 		consumerChannel.consume(queueName, function(message) {
-			var message = JSON.parse(message);
-			console.log(`\tReceived message '${message.message}' from producer ${message.slot} with timestamp ${message.ts}.`);
-		});
+			var message = JSON.parse(message.content.toString());
+			console.log(`\tReceived message '${message.message}' from producer ${message.slot} with timestamp ${message.timestamp}.`);
+		}, { noAck: true });
 	};
 };
 
@@ -62,6 +76,15 @@ function startup() {
 		consumers.push(consumer);
 		console.log(`Created a consumer.`);
 	}());
+
+	// first pass: create a single producer
+	(function() {
+		var producer = new Producer();
+		producer.start();
+		producers.push(producer);
+		console.log(`Created the producer.`);
+	}());
+
 };
 
 function shutdown(code = 0, message) {
