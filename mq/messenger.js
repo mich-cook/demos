@@ -33,6 +33,7 @@ require('amqplib/callback_api')
 
 function Producer() {
 	this.message = `Hello Demo!`;
+	this.slot = `TBD`;
 	this.intervalHandle;
 	this.start = function() {
 		producerChannel.assertQueue(queueName, { durable: false });
@@ -81,7 +82,7 @@ function startup() {
 	(function() {
 		var producer = new Producer();
 		producer.start();
-		producers.push(producer);
+		producer.slot = producers.push(producer);
 		console.log(`Created the producer.`);
 	}());
 
