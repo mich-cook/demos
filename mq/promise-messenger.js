@@ -98,14 +98,6 @@ function Consumer() {
 // every three seconds. that's usually enough time to see
 // that the producers have changed by watching the slot numbers
 function startup() {
-	// wait for the second knock
-	// each channel will call startup when it's created
-	// since we can't know how long each will take
-	// first will fail this test. second will succeed.
-	if ((consumerChannel === undefined) || (producerChannel === undefined)) {
-		return;
-	}
-
 	// right now we just create one consumer.
 	// since we're not doing much with the messages the
 	// single consumer can actually handle a bunch of
