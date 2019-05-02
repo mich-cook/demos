@@ -47,12 +47,13 @@ function Producer() {
 	this.slot = `TBD`;
 	this.intervalHandle;
 	this.start = function() {
-		producerChannel.assertQueue(queueName, { durable: false });
-		this.intervalHandle = setInterval(function() {
-			var timestamp = new Date().getTime();
-			var payload = { "message": this.message, "timestamp": timestamp, "slot": this.slot };
-			producerChannel.sendToQueue(queueName, Buffer.from(JSON.stringify(payload)));
-		}.bind(this), 500);
+		return producerChannel.assertQueue(queueName, { durable: false }).then(function() {
+			this.intervalHandle = setInterval(function() {
+				var timestamp = new Date().getTime();
+				var payload = { "message": this.message, "timestamp": timestamp, "slot": this.slot };
+				producerChannel.sendToQueue(queueName, Buffer.from(JSON.stringify(payload)));
+			}.bind(this), 500);
+		}.bind(this));
 	};
 	this.stop = function() {
 		clearInterval(this.intervalHandle);
@@ -62,9 +63,11 @@ function Producer() {
 // makes a new one, starts it, then puts it in the pile with the rest
 function createProducer() {
 	var producer = new Producer();
-	producer.start();
-	producer.slot = producers.push(producer);
-	console.log(`Created a producer. We now have ${producers.length}.`);
+	producer.start()
+			.then(function() {
+				producer.slot = producers.push(producer);
+				console.log(`Created a producer. We now have ${producers.length}.`);
+			});
 };
 
 // takes the last one we created and kills it
