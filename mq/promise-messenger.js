@@ -84,11 +84,12 @@ function destroyProducer() {
 //
 function Consumer() {
 	this.start = function() {
-		consumerChannel.assertQueue(queueName, { durable: false });
-		consumerChannel.consume(queueName, function(message) {
-			var msg = JSON.parse(message.content.toString());
-			console.log(`\tReceived message '${msg.message}' from producer ${msg.slot} with timestamp ${msg.timestamp}.`);
-			consumerChannel.ack(message);
+		return consumerChannel.assertQueue(queueName, { durable: false }).then(function() {
+			return consumerChannel.consume(queueName, function(message) {
+				var msg = JSON.parse(message.content.toString());
+				console.log(`\tReceived message '${msg.message}' from producer ${msg.slot} with timestamp ${msg.timestamp}.`);
+				consumerChannel.ack(message);
+			});
 		});
 	};
 };
@@ -100,29 +101,33 @@ function Consumer() {
 // every three seconds. that's usually enough time to see
 // that the producers have changed by watching the slot numbers
 function startup() {
+
 	// right now we just create one consumer.
 	// since we're not doing much with the messages the
 	// single consumer can actually handle a bunch of
 	// producer instances
 	(function() {
 		var consumer = new Consumer();
-		consumer.start();
-		consumers.push(consumer);
-		console.log(`Created a consumer.`);
-	}());
+		consumer.start()
+				.then(function() {
+					consumers.push(consumer);
+					console.log(`Created a consumer.`);
+				});
 
-	// the fun part. randomly create or destroy producers
-	// that will produce messages for our consumer. to
-	// some extent, it kinda shows how it would work
-	// if these were spread across some set of machine
-	// instances.
-	setInterval(function() {
-		if (Math.random() > 0.5) {
-			createProducer();
-		} else {
-			destroyProducer();
-		}
-	}, 3000);
+		// the fun part. randomly create or destroy producers
+		// that will produce messages for our consumer. to
+		// some extent, it kinda shows how it would work
+		// if these were spread across some set of machine
+		// instances.
+		setInterval(function() {
+			if (Math.random() > 0.5) {
+				createProducer();
+			} else {
+				destroyProducer();
+			}
+		}, 3000);
+
+	}());
 
 };
 
