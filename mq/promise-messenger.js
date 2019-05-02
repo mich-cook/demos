@@ -4,7 +4,7 @@
 // top level stuff used throughout
 //
 var queueName = 'message-demo';
-var queueConnection;
+var queueConnection = require('amqplib').connect('amqp://localhost');
 
 var producers = [];
 var consumers = [];
@@ -15,27 +15,27 @@ var consumerChannel;
 //
 // Setting up the connection and channels to the message queue
 //
-require('amqplib/callback_api')
-	.connect('amqp://localhost', function(error, connection) {
-		if (error !== null) { shutdown(1, `Failed to open connection to message queue.`); }
-		console.log(`Connection to message queue established.`);
-		queueConnection = connection;
+queueConnection.then(function(connection) {
+	console.log(`Connection to message queue established.`);
 
-		connection.createChannel(function(error, channel) {
-			if (error !== null) { shutdown(2, `Failed to open channel for producers.`); }
-			console.log(`Producer channel established.`);
-			producerChannel = channel;
-			startup();
-		});
+	// set up the channel for producers
+	// bail if it breaks
+	producerChannel = connection.createChannel()
+		.then(function() { console.log(`Producer channel established.`); })
+		.catch(function() { shutdown(2, `Failed to open channel for producers.`); });
 
-		connection.createChannel(function(error, channel) {
-			if (error !== null) { shutdown(2, `Failed to open channel for consumers.`); }
-			console.log(`Consumer channel established.`);
-			consumerChannel = channel;
-			startup();
-		});
+	// set up the channel for consumers (even though there's just one for now)
+	// again, bail if it breaks
+	consumerChannel = connection.createChannel()
+		.then(function() { console.log(`Consumer channel established.`); })
+		.catch(function() { shutdown(2, `Failed to open channel for consumers.`);  });
 
-	});
+	// channels are all established, let's have some fun sending messages
+	Promise.all([producerChannel, consumerChannel]).then(function() {
+		startup();
+	}
+
+}).catch(function(error) { shutdown(1, `Failed to open connection to message queue.`); });
 
 //
 // Message producer and associated functions
