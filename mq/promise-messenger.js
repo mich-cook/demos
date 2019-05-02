@@ -20,14 +20,14 @@ queueConnection.then(function(connection) {
 
 	// set up the channel for producers
 	// bail if it breaks
-	producerChannel = connection.createChannel()
-		.then(function() { console.log(`Producer channel established.`); })
+	var producerChannelPromise = connection.createChannel()
+		.then(function() { producerChannel = channel; console.log(`Producer channel established.`); })
 		.catch(function() { shutdown(2, `Failed to open channel for producers.`); });
 
 	// set up the channel for consumers (even though there's just one for now)
 	// again, bail if it breaks
-	consumerChannel = connection.createChannel()
-		.then(function() { console.log(`Consumer channel established.`); })
+	var consumerChannelPromise = connection.createChannel()
+		.then(function() { consumerChannel = channel; console.log(`Consumer channel established.`); })
 		.catch(function() { shutdown(2, `Failed to open channel for consumers.`);  });
 
 	// channels are all established, let's have some fun sending messages
