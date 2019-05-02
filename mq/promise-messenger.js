@@ -4,7 +4,8 @@
 // top level stuff used throughout
 //
 var queueName = 'message-demo';
-var queueConnection = require('amqplib').connect('amqp://localhost');
+var queueConnection;
+var queueConnectionPromise = require('amqplib').connect('amqp://localhost');
 
 var producers = [];
 var consumers = [];
@@ -15,8 +16,9 @@ var consumerChannel;
 //
 // Setting up the connection and channels to the message queue
 //
-queueConnection.then(function(connection) {
+queueConnectionPromise.then(function(connection) {
 	console.log(`Connection to message queue established.`);
+	queueConnection = connection;
 
 	// set up the channel for producers
 	// bail if it breaks
