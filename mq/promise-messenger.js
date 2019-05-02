@@ -31,9 +31,9 @@ queueConnection.then(function(connection) {
 		.catch(function() { shutdown(2, `Failed to open channel for consumers.`);  });
 
 	// channels are all established, let's have some fun sending messages
-	Promise.all([producerChannel, consumerChannel]).then(function() {
+	Promise.all([producerChannelPromise, consumerChannelPromise]).then(function() {
 		startup();
-	}
+	});
 
 }).catch(function(error) { shutdown(1, `Failed to open connection to message queue.`); });
 
